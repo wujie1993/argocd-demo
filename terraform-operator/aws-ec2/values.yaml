@@ -9,5 +9,6 @@ aws:
   credsSecret: aws-creds
 ec2:
   name: aws-ec2
+  instanceType: t3.micro
 terraform:
   version: "1.4.6"

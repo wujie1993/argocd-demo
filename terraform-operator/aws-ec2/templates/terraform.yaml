@@ -51,3 +51,5 @@ spec:
     env:
     - name: TF_VAR_ec2_name
       value: {{ .Values.ec2.name | quote }}
+    - name: TF_VAR_ec2_instance_type
+      value: {{ .Values.ec2.instanceType | quote }}
