@@ -3,39 +3,47 @@ kind: Terraform
 metadata:
   name: learn-terraform-ec2
 spec:
-  # 直接把你的 Terraform 代码写在这里
-  module: |
+  # 你的 Terraform 代码（正确字段：terraformModule）
+  terraformModule: |
+    terraform {
+      required_providers {
+        aws = {
+          source  = "hashicorp/aws"
+          version = "~> 5.92"
+        }
+      }
+      required_version = ">= 1.2"
+    }
+
     provider "aws" {
       region = "us-east-1"
     }
 
     data "aws_ami" "ubuntu" {
       most_recent = true
-
       filter {
-        name = "name"
+        name   = "name"
         values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"]
       }
-
       owners = ["099720109477"]
     }
 
     resource "aws_instance" "app_server" {
       ami           = data.aws_ami.ubuntu.id
       instance_type = "t3.micro"
-
       tags = {
         Name = "learn-terraform"
       }
     }
 
-  # 版本配置
-  terraformVersion: "1.7.0"
+  # 正确格式：backend 是字符串
+  backend: |
+    backend "local" {
+    }
 
-  # 后端配置（空 = 本地存储，适合学习）
-  backend: {}
+  terraformVersion: "1.8.0"
 
-  # 认证：把 AWS 凭证注入
+  # AWS 凭证（从 secret 读取）
   env:
     - name: AWS_ACCESS_KEY_ID
       valueFrom:
