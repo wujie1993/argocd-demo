@@ -11,7 +11,7 @@ spec:
   ignoreDelete: false
 
   {{- if .Values.approval.enabled }}
-  approvePlan: true
+  requireApproval: true
   {{- end }}
 
   backend: |-
