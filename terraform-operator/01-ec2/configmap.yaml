@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: terraform-ec2-code
+  name: terraform-01-ec2
 data:
   main.tf: |
     terraform {
