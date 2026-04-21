@@ -1,0 +1,38 @@
+name: Checkov
+
+on:
+  pull_request:
+    paths:
+      - 'terraform-operator/**/*.tf'
+      - '.github/workflows/checkov.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  checkov:
+    name: Run Checkov
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Run Checkov
+        id: checkov
+        uses: bridgecrewio/checkov-action@3203f966a7ccd680cd8f6aaa3c3c5b0b3e9afa32 # v12
+        with:
+          directory: terraform-operator
+          framework: terraform
+          output_format: cli,sarif
+          output_file_path: console,results.sarif
+          quiet: true
+          soft_fail: false
+
+      - name: Upload SARIF report
+        if: ${{ always() && (github.event_name != 'pull_request' || !github.event.pull_request.head.repo.fork) }}
+        uses: github/codeql-action/upload-sarif@f1f6e5f6af878fb37288ce1c627459e94dbf7d01 # v3.30.1
+        with:
+          sarif_file: results.sarif
