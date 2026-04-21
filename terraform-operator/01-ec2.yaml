@@ -1,0 +1,49 @@
+apiVersion: tf.galleybytes.com/v1beta1
+kind: Terraform
+metadata:
+  name: learn-terraform-ec2
+spec:
+  # 直接把你的 Terraform 代码写在这里
+  module: |
+    provider "aws" {
+      region = "us-east-1"
+    }
+
+    data "aws_ami" "ubuntu" {
+      most_recent = true
+
+      filter {
+        name = "name"
+        values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"]
+      }
+
+      owners = ["099720109477"]
+    }
+
+    resource "aws_instance" "app_server" {
+      ami           = data.aws_ami.ubuntu.id
+      instance_type = "t3.micro"
+
+      tags = {
+        Name = "learn-terraform"
+      }
+    }
+
+  # 版本配置
+  terraformVersion: "1.7.0"
+
+  # 后端配置（空 = 本地存储，适合学习）
+  backend: {}
+
+  # 认证：把 AWS 凭证注入
+  env:
+    - name: AWS_ACCESS_KEY_ID
+      valueFrom:
+        secretKeyRef:
+          name: aws-creds
+          key: access-key
+    - name: AWS_SECRET_ACCESS_KEY
+      valueFrom:
+        secretKeyRef:
+          name: aws-creds
+          key: secret-key
