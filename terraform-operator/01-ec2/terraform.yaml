@@ -4,7 +4,7 @@ metadata:
   name: learn-terraform-ec2
 spec:
   # ✅ v0.17.1 正确字段：module 对象，引用ConfigMap
-  module:
+  terraformModule:
     configMapRef:
       name: tf-ec2-code
 
