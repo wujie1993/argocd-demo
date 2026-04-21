@@ -3,19 +3,58 @@ kind: Terraform
 metadata:
   name: terraform-01-ec2
 spec:
-  # ✅ v0.17.1 唯一正确字段：module（不是 terraformModule！）
+  # 1. 对齐官方：Terraform版本
+  terraformVersion: "1.4.6"
+  persistentVolumeSize: 500Mi
+  keepLatestPodsOnly: true
+  setup:
+    cleanupDisk: true
+  ignoreDelete: false
+
+  # 2. 对齐官方：Backend配置（本地后端，最简单）
+  backend: |-
+    terraform {
+      backend "local" {}
+    }
+
+  # 3. 对齐官方：核心字段 inline 直接写你的Terraform代码（✅ 解决必填报错）
   terraformModule:
-    configMapRef:
-      name: terraform-01-ec2
+    inline: |-
+      terraform {
+        required_providers {
+          aws = {
+            source  = "hashicorp/aws"
+            version = "~> 5.92"
+          }
+        }
+        required_version = ">= 1.2"
+      }
 
-  # 后端配置
-  backend: |
-    backend "local" {}
+      provider "aws" {
+        region = "us-east-1"
+      }
 
-  terraformVersion: "1.8.0"
+      data "aws_ami" "ubuntu" {
+        most_recent = true
+        filter {
+          name   = "name"
+          values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"]
+        }
+        owners = ["099720109477"]
+      }
 
-  # AWS 凭证
-  env:
+      resource "aws_instance" "app_server" {
+        ami           = data.aws_ami.ubuntu.id
+        instance_type = "t3.micro"
+        tags = {
+          Name = "learn-terraform"
+        }
+      }
+
+  # 4. 对齐官方：环境变量放在 taskOptions（✅ 官方规范，不是spec.env）
+  taskOptions:
+  - for: ["plan", "apply", "plan-delete", "apply-delete"]
+    env:
     - name: AWS_ACCESS_KEY_ID
       valueFrom:
         secretKeyRef:
@@ -26,3 +65,5 @@ spec:
         secretKeyRef:
           name: aws-creds
           key: secret-key
+    - name: AWS_REGION
+      value: us-east-1
