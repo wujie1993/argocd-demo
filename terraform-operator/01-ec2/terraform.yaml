@@ -3,19 +3,18 @@ kind: Terraform
 metadata:
   name: learn-terraform-ec2
 spec:
-  # ✅ v0.17.1 正确字段：module 对象，引用ConfigMap
-  terraformModule:
+  # ✅ v0.17.1 唯一正确字段：module（不是 terraformModule！）
+  module:
     configMapRef:
-      name: tf-ec2-code
+      name: terraform-ec2-code
 
-  # ✅ v0.17.1 正确格式：backend 字符串(HCL)
+  # 后端配置
   backend: |
     backend "local" {}
 
-  # Terraform 版本
   terraformVersion: "1.8.0"
 
-  # AWS 认证凭证（从K8s Secret读取）
+  # AWS 凭证
   env:
     - name: AWS_ACCESS_KEY_ID
       valueFrom:
