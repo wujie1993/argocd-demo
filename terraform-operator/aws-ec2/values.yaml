@@ -1,7 +1,7 @@
 # 原配置不变，仅追加以下内容
 approval:
   # 🔥 生产环境必须开启：plan后自动阻塞，等待人工审批
-  enabled: true  
+  enabled: false  
 
 # 原有配置
 aws:
