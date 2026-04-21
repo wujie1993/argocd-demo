@@ -1,0 +1,5 @@
+apiVersion: v2
+name: terraform-01-aws-ec2
+version: 0.1.0
+description: Provision AWS EC2 via Terraform Operator
+type: application

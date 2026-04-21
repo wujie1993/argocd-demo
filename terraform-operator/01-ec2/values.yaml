@@ -1,0 +1,13 @@
+# AWS 配置
+aws:
+  region: us-east-1
+  credsSecret: aws-creds
+
+# EC2 配置
+ec2:
+  name: aws-ec2
+  instanceType: t3.micro
+
+# Terraform 配置
+terraform:
+  version: "1.4.6"

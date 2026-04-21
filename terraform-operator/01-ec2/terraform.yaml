@@ -1,69 +1,54 @@
 apiVersion: tf.galleybytes.com/v1beta1
 kind: Terraform
 metadata:
-  name: terraform-01-ec2
+  name: terraform-{{ .Values.ec2.name | quote }}
 spec:
-  # 1. 对齐官方：Terraform版本
-  terraformVersion: "1.4.6"
+  terraformVersion: {{ .Values.terraform.version }}
   persistentVolumeSize: 500Mi
   keepLatestPodsOnly: true
   setup:
     cleanupDisk: true
   ignoreDelete: false
 
-  # 2. 对齐官方：Backend配置（本地后端，最简单）
+  # 官方同款 Kubernetes Backend
   backend: |-
     terraform {
-      backend "local" {}
+      backend "kubernetes" {
+        secret_suffix    = "{{ .Values.ec2.name }}"
+        namespace        = "{{ .Release.Namespace }}"
+        in_cluster_config = true
+      }
     }
 
-  # 3. 对齐官方：核心字段 inline 直接写你的Terraform代码（✅ 解决必填报错）
+  outputsSecret: "{{ .Values.ec2.name }}"
+
+  # 官方标准：读取 files/main.tf
   terraformModule:
     inline: |-
-      terraform {
-        required_providers {
-          aws = {
-            source  = "hashicorp/aws"
-            version = "~> 5.92"
-          }
-        }
-        required_version = ">= 1.2"
-      }
+      {{ (.Files.Get "main.tf") | nindent 6 }}
 
-      provider "aws" {
-        region = "us-east-1"
-      }
-
-      data "aws_ami" "ubuntu" {
-        most_recent = true
-        filter {
-          name   = "name"
-          values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"]
-        }
-        owners = ["099720109477"]
-      }
-
-      resource "aws_instance" "app_server" {
-        ami           = data.aws_ami.ubuntu.id
-        instance_type = "t3.micro"
-        tags = {
-          Name = "learn-terraform"
-        }
-      }
-
-  # 4. 对齐官方：环境变量放在 taskOptions（✅ 官方规范，不是spec.env）
+  # 官方同款 taskOptions 环境变量
   taskOptions:
   - for: ["plan", "apply", "plan-delete", "apply-delete"]
     env:
     - name: AWS_ACCESS_KEY_ID
       valueFrom:
         secretKeyRef:
-          name: aws-creds
+          name: {{ .Values.aws.credsSecret }}
           key: access-key
     - name: AWS_SECRET_ACCESS_KEY
       valueFrom:
         secretKeyRef:
-          name: aws-creds
+          name: {{ .Values.aws.credsSecret }}
           key: secret-key
     - name: AWS_REGION
-      value: us-east-1
+      value: {{ .Values.aws.region }}
+    - name: TF_VAR_aws_region
+      value: {{ .Values.aws.region }}
+
+  - for: ["plan", "apply"]
+    env:
+    - name: TF_VAR_ec2_name
+      value: {{ .Values.ec2.name | quote }}
+    - name: TF_VAR_ec2_instance_type
+      value: {{ .Values.ec2.instanceType | quote }}
