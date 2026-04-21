@@ -9,6 +9,7 @@ spec:
   setup:
     cleanupDisk: true
   ignoreDelete: false
+  approvePlan: true
 
   # 官方同款 Kubernetes Backend
   backend: |-
