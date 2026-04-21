@@ -46,8 +46,6 @@ spec:
       value: {{ .Values.aws.region }}
     - name: TF_VAR_aws_region
       value: {{ .Values.aws.region }}
-
-  - for: ["plan", "apply"]
     env:
     - name: TF_VAR_ec2_name
       value: {{ .Values.ec2.name | quote }}
