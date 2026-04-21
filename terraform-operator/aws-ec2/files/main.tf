@@ -12,6 +12,8 @@ provider "aws" {
   region = var.aws_region
 }
 
+data "aws_caller_identity" "current" {}
+
 data "aws_iam_policy_document" "ec2_assume_role" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -53,6 +55,37 @@ resource "aws_iam_instance_profile" "app_server" {
   role = aws_iam_role.app_server.name
 }
 
+#checkov:skip=CKV_AWS_109: KMS key policies require an account administration statement for key management.
+#checkov:skip=CKV_AWS_111: The administration statement is intentionally scoped to the current account root principal.
+#checkov:skip=CKV_AWS_356: AWS KMS key policies use Resource "*" because the policy is attached directly to the key.
+resource "aws_kms_key" "ebs" {
+  description         = "KMS key for ${var.ec2_name} EC2 root volume encryption"
+  enable_key_rotation = true
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "EnableRootPermissions"
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+        }
+        Action   = "kms:*"
+        Resource = "*"
+      }
+    ]
+  })
+
+  tags = {
+    Name = "${var.ec2_name}-ebs"
+  }
+}
+
+resource "aws_kms_alias" "ebs" {
+  name          = "alias/${var.ec2_name}-ebs"
+  target_key_id = aws_kms_key.ebs.key_id
+}
+
 resource "aws_instance" "app_server" {
   ami                  = data.aws_ami.ubuntu.id
   instance_type        = var.ec2_instance_type
@@ -66,7 +99,8 @@ resource "aws_instance" "app_server" {
   }
 
   root_block_device {
-    encrypted = true
+    encrypted  = true
+    kms_key_id = aws_kms_key.ebs.arn
   }
 
   tags = {
