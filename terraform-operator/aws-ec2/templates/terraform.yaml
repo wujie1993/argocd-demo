@@ -53,3 +53,8 @@ spec:
       value: {{ .Values.ec2.name | quote }}
     - name: TF_VAR_ec2_instance_type
       value: {{ .Values.ec2.instanceType | quote }}
+
+  podTemplate:
+    spec:
+      securityContext:
+        fsGroup: 1000
