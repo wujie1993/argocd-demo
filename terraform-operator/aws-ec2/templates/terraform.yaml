@@ -1,9 +1,9 @@
 apiVersion: tf.galleybytes.com/v1beta1
 kind: Terraform
 metadata:
-  name: terraform-{{ .Values.ec2.name | quote }}
+  name: terraform-{{ .Values.ec2.name }}
 spec:
-  terraformVersion: {{ .Values.terraform.version }}
+  terraformVersion: {{ .Values.terraform.version | quote }}
   persistentVolumeSize: 500Mi
   keepLatestPodsOnly: true
   setup:
@@ -15,8 +15,8 @@ spec:
   backend: |-
     terraform {
       backend "kubernetes" {
-        secret_suffix    = "{{ .Values.ec2.name }}"
-        namespace        = "{{ .Release.Namespace }}"
+        secret_suffix    = {{ .Values.ec2.name | quote }}
+        namespace        = {{ .Release.Namespace | quote }}
         in_cluster_config = true
       }
     }
@@ -43,9 +43,9 @@ spec:
           name: {{ .Values.aws.credsSecret }}
           key: secret-key
     - name: AWS_REGION
-      value: {{ .Values.aws.region }}
+      value: {{ .Values.aws.region | quote }}
     - name: TF_VAR_aws_region
-      value: {{ .Values.aws.region }}
+      value: {{ .Values.aws.region | quote }}
 
   - for: ["plan", "apply"]
     env:
