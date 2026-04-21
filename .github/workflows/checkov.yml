@@ -22,7 +22,7 @@ jobs:
 
       - name: Run Checkov
         id: checkov
-        uses: bridgecrewio/checkov-action@v12
+        uses: bridgecrewio/checkov-action@<FULL_40_CHARACTER_COMMIT_SHA_FOR_THE_APPROVED_V12_RELEASE>
         with:
           directory: terraform-operator
           framework: terraform
