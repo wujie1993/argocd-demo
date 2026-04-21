@@ -1,13 +1,13 @@
-# AWS 配置
+# 原配置不变，仅追加以下内容
+approval:
+  # 🔥 生产环境必须开启：plan后自动阻塞，等待人工审批
+  enabled: true  
+
+# 原有配置
 aws:
   region: us-east-1
   credsSecret: aws-creds
-
-# EC2 配置
 ec2:
   name: aws-ec2
-  instanceType: t3.micro
-
-# Terraform 配置
 terraform:
   version: "1.4.6"
