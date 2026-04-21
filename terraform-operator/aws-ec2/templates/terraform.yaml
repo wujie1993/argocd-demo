@@ -10,12 +10,10 @@ spec:
     cleanupDisk: true
   ignoreDelete: false
 
-  # 🔥 【核心改动】从values读取配置，开启人工审批卡点
   {{- if .Values.approval.enabled }}
-  approvePlan: true  # 自动plan后阻塞，必须人工批准
+  approvePlan: true
   {{- end }}
 
-  # 以下全部保持 官方示例 不变
   backend: |-
     terraform {
       backend "kubernetes" {
@@ -24,12 +22,13 @@ spec:
         in_cluster_config = true
       }
     }
+
   outputsSecret: "{{ .Values.ec2.name }}-outputs"
+
   terraformModule:
     inline: |-
-      {{ (.Files.Get "main.tf") | nindent 6 }}
-  
-  # taskOptions 保持不变
+      {{ (.Files.Get "files/main.tf") | nindent 6 }}
+
   taskOptions:
   - for: ["plan", "apply", "plan-delete", "apply-delete"]
     env:
