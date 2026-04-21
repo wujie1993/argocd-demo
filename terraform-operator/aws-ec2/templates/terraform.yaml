@@ -46,7 +46,6 @@ spec:
       value: {{ .Values.aws.region }}
     - name: TF_VAR_aws_region
       value: {{ .Values.aws.region }}
-    env:
     - name: TF_VAR_ec2_name
       value: {{ .Values.ec2.name | quote }}
     - name: TF_VAR_ec2_instance_type
