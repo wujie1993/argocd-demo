@@ -28,16 +28,24 @@ provider "vault" {
   }
 }
 
-# 2. Read AWS credentials from KV v2 using explicit mount + secret name.
 data "vault_kv_secret_v2" "aws_creds" {
+  count = var.credentials_source == "vault" ? 1 : 0
   mount = var.vault_kv_mount
   name  = var.vault_aws_secret_name
 }
 
+locals {
+  # When source is "vault", pull credentials from the KV v2 data source.
+  # When source is "env", pass null so the AWS provider falls back to
+  # the AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY environment variables.
+  aws_access_key = var.credentials_source == "vault" ? data.vault_kv_secret_v2.aws_creds[0].data["ak"] : null
+  aws_secret_key = var.credentials_source == "vault" ? data.vault_kv_secret_v2.aws_creds[0].data["sk"] : null
+}
+
 provider "aws" {
-  region = var.aws_region
-  access_key = data.vault_kv_secret_v2.aws_creds.data["ak"]
-  secret_key = data.vault_kv_secret_v2.aws_creds.data["sk"]
+  region     = var.aws_region
+  access_key = local.aws_access_key
+  secret_key = local.aws_secret_key
 }
 
 data "aws_caller_identity" "current" {}
@@ -136,7 +144,6 @@ resource "aws_instance" "app_server" {
   }
 }
 
-# 变量（Helm 注入）
 variable "aws_region" {
   type = string
 }
@@ -149,10 +156,11 @@ variable "ec2_instance_type" {
   type = string
 }
 
-variable "vault_kubernetes_jwt" {
-  type      = string
-  sensitive = true
-  default   = ""
+variable "credentials_source" {
+  type    = string
+  default = "vault"
+  # "vault" - read AWS credentials from Vault KV v2
+  # "env"   - use AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY env vars
 }
 
 variable "vault_kv_mount" {

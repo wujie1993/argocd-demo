@@ -1,23 +1,26 @@
-# 原配置不变，仅追加以下内容
-approval:
-  # 🔥 生产环境必须开启：plan后自动阻塞，等待人工审批
-  enabled: false  
-
-# Set this to an existing ServiceAccount if you want Terraform Operator runner pods
-# to use a stable identity instead of the generated tf-<name>-v<generation> account.
+# ServiceAccount used by Terraform Operator runner pods.
 serviceAccount: "aws-ec2"
 
-# 原有配置
+# When enabled, plan output must be manually approved before apply runs.
+approval:
+  enabled: false
+
 aws:
   region: us-east-1
+  # "vault" - read credentials from Vault KV v2 (requires Vault setup)
+  # "env"   - inject credentials from a Kubernetes secret as env vars
+  credentialsSource: vault
+  # Used when credentialsSource is "env".
+  # Secret must have keys: access-key, secret-key
   credsSecret: aws-creds
-  # Vault KV v2 settings. For `vault kv get secret/aws`:
-  # - vaultKvMount should be `secret`
-  # - vaultSecretName should be `aws`
+  # Used when credentialsSource is "vault".
+  # Matches: vault kv get <vaultKvMount>/<vaultSecretName>
   vaultKvMount: secret
   vaultSecretName: aws
+
 ec2:
   name: aws-ec2
   instanceType: t3.micro
+
 terraform:
   version: "1.4.6"

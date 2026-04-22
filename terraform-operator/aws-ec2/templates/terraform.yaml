@@ -35,17 +35,6 @@ spec:
   taskOptions:
   - for: ["plan", "apply", "plan-delete", "apply-delete"]
     env:
-    #  - AWS credentials are intentionally not injected to avoid accidental exposure in logs or outputs.
-    # - name: AWS_ACCESS_KEY_ID
-    #   valueFrom:
-    #     secretKeyRef:
-    #       name: {{ .Values.aws.credsSecret }}
-    #       key: access-key
-    # - name: AWS_SECRET_ACCESS_KEY
-    #   valueFrom:
-    #     secretKeyRef:
-    #       name: {{ .Values.aws.credsSecret }}
-    #       key: secret-key
     - name: AWS_REGION
       value: {{ .Values.aws.region }}
     - name: TF_VAR_aws_region
@@ -54,7 +43,23 @@ spec:
       value: {{ .Values.ec2.name | quote }}
     - name: TF_VAR_ec2_instance_type
       value: {{ .Values.ec2.instanceType | quote }}
+    - name: TF_VAR_credentials_source
+      value: {{ .Values.aws.credentialsSource | quote }}
+    {{- if eq .Values.aws.credentialsSource "env" }}
+    - name: AWS_ACCESS_KEY_ID
+      valueFrom:
+        secretKeyRef:
+          name: {{ .Values.aws.credsSecret }}
+          key: access-key
+    - name: AWS_SECRET_ACCESS_KEY
+      valueFrom:
+        secretKeyRef:
+          name: {{ .Values.aws.credsSecret }}
+          key: secret-key
+    {{- end }}
+    {{- if eq .Values.aws.credentialsSource "vault" }}
     - name: TF_VAR_vault_kv_mount
       value: {{ .Values.aws.vaultKvMount | quote }}
     - name: TF_VAR_vault_aws_secret_name
       value: {{ .Values.aws.vaultSecretName | quote }}
+    {{- end }}

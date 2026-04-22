@@ -15,16 +15,8 @@ EOF
 
 ### Write AWS Credentials Secret
 
-KV v2 (path used by default in this chart):
-
 ```bash
 vault kv put secret/aws ak=<AWS_ACCESS_KEY_ID> sk=<AWS_SECRET_ACCESS_KEY>
-```
-
-KV v1:
-
-```bash
-vault write secret/aws ak=<AWS_ACCESS_KEY_ID> sk=<AWS_SECRET_ACCESS_KEY>
 ```
 
 ### Create Kubernetes Auth Role
@@ -38,25 +30,14 @@ vault write auth/kubernetes/role/aws-ec2 \
          ttl=24h
 ```
 
-### Troubleshooting `permission denied` on `auth/token/create`
+## Troubleshooting
 
-If Terraform fails with `failed to create limited child token` (HTTP 403 on
-`/v1/auth/token/create`), configure the Vault provider with:
+### `permission denied` on `auth/token/create`
 
-```hcl
-provider "vault" {
-    # ...
-    skip_child_token = true
-}
-```
+The Vault Kubernetes auth role does not permit child token creation. The Vault provider is configured with `skip_child_token = true` to reuse the login token directly.
 
-This avoids child token creation and uses the Kubernetes login token directly.
+### `no secret found`
 
-### Troubleshooting `no secret found at "secret/data/aws"`
-
-1. Confirm the secret exists in Vault: `vault kv get secret/aws`.
-2. Ensure chart values match that command:
-    - `aws.vaultKvMount: secret`
-    - `aws.vaultSecretName: aws`
-3. Re-run Helm upgrade so runner pods get the updated TF vars.
-4. If it still fails, verify you are reading from the same Vault namespace and server address used by the pod.
+1. Confirm the secret exists: `vault kv get secret/aws`.
+2. Check `aws.vaultKvMount` and `aws.vaultSecretName` in values match the engine mount and key name.
+3. Run `helm upgrade` so runner pods receive the updated `TF_VAR_*` environment variables.
