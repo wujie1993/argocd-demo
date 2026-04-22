@@ -5,7 +5,7 @@ approval:
 
 # Set this to an existing ServiceAccount if you want Terraform Operator runner pods
 # to use a stable identity instead of the generated tf-<name>-v<generation> account.
-serviceAccount: "terraform-operator"
+serviceAccount: "aws-ec2"
 
 # 原有配置
 aws:
