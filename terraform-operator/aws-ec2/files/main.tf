@@ -20,13 +20,9 @@ provider "vault" {
 
     parameters = {
       role = "aws-ec2"
-      jwt  = local.vault_kubernetes_jwt
+      jwt  = file("/var/run/secrets/kubernetes.io/serviceaccount/token")
     }
   }
-}
-
-locals {
-  vault_kubernetes_jwt = var.vault_kubernetes_jwt != "" ? var.vault_kubernetes_jwt : try(trimspace(file("/var/run/secrets/kubernetes.io/serviceaccount/token")), "")
 }
 
 # 2. 从 KV-V2 引擎读取 AWS 凭证
