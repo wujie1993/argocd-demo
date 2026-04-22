@@ -14,6 +14,9 @@ terraform {
 
 provider "vault" {
   address = "http://vault.vault.svc.cluster.local:8200"
+  # Kubernetes auth roles commonly do not allow auth/token/create.
+  # Reuse the login token instead of requesting a child token.
+  skip_child_token = true
 
   auth_login {
     path = "auth/kubernetes/login"
