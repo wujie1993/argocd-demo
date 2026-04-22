@@ -4,12 +4,40 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.92"
     }
+    vault = {
+      source  = "hashicorp/vault"
+      version = "~> 4.0"
+    }
   }
   required_version = ">= 1.2"
 }
 
+provider "vault" {
+  address = "http://vault.vault.svc.cluster.local:8200"
+
+  auth_login {
+    path = "auth/kubernetes/login"
+
+    parameters = {
+      role = "terraform"
+      jwt  = local.vault_kubernetes_jwt
+    }
+  }
+}
+
+locals {
+  vault_kubernetes_jwt = var.vault_kubernetes_jwt != "" ? var.vault_kubernetes_jwt : try(trimspace(file("/var/run/secrets/kubernetes.io/serviceaccount/token")), "")
+}
+
+# 2. 从 KV-V2 引擎读取 AWS 凭证
+data "vault_generic_secret" "aws_creds" {
+  path = "secret/data/aws" # KV-V2 引擎需要在路径中加上 "data"
+}
+
 provider "aws" {
   region = var.aws_region
+  access_key = data.vault_generic_secret.aws_creds.data["ak"]
+  secret_key = data.vault_generic_secret.aws_creds.data["sk"]
 }
 
 data "aws_caller_identity" "current" {}
@@ -119,4 +147,10 @@ variable "ec2_name" {
 
 variable "ec2_instance_type" {
   type = string
+}
+
+variable "vault_kubernetes_jwt" {
+  type      = string
+  sensitive = true
+  default   = ""
 }
