@@ -30,7 +30,7 @@ provider "vault" {
 
 # 2. 从 KV-V2 引擎读取 AWS 凭证
 data "vault_generic_secret" "aws_creds" {
-  path = "secret/data/aws" # KV-V2 引擎需要在路径中加上 "data"
+  path = var.vault_aws_secret_path
 }
 
 provider "aws" {
@@ -152,4 +152,9 @@ variable "vault_kubernetes_jwt" {
   type      = string
   sensitive = true
   default   = ""
+}
+
+variable "vault_aws_secret_path" {
+  type    = string
+  default = "secret/data/aws"
 }

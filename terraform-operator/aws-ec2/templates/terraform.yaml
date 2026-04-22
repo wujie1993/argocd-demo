@@ -54,3 +54,5 @@ spec:
       value: {{ .Values.ec2.name | quote }}
     - name: TF_VAR_ec2_instance_type
       value: {{ .Values.ec2.instanceType | quote }}
+    - name: TF_VAR_vault_aws_secret_path
+      value: {{ .Values.aws.vaultSecretPath | quote }}
