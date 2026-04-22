@@ -3,6 +3,10 @@ approval:
   # 🔥 生产环境必须开启：plan后自动阻塞，等待人工审批
   enabled: false  
 
+# Set this to an existing ServiceAccount if you want Terraform Operator runner pods
+# to use a stable identity instead of the generated tf-<name>-v<generation> account.
+serviceAccount: "terraform-operator"
+
 # 原有配置
 aws:
   region: us-east-1

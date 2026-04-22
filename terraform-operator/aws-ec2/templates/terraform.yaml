@@ -4,6 +4,9 @@ metadata:
   name: {{ .Values.ec2.name }}
 spec:
   terraformVersion: {{ .Values.terraform.version }}
+  {{- if .Values.serviceAccount }}
+  serviceAccount: {{ .Values.serviceAccount | quote }}
+  {{- end }}
   persistentVolumeSize: 500Mi
   keepLatestPodsOnly: true
   setup:
