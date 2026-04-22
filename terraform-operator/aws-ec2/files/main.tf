@@ -19,7 +19,7 @@ provider "vault" {
     path = "auth/kubernetes/login"
 
     parameters = {
-      role = "terraform"
+      role = "aws-ec2"
       jwt  = local.vault_kubernetes_jwt
     }
   }
