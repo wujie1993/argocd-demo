@@ -54,6 +54,9 @@ This avoids child token creation and uses the Kubernetes login token directly.
 
 ### Troubleshooting `no secret found at "secret/data/aws"`
 
-1. Confirm the secret exists in Vault at the expected path.
-2. If your engine is KV v1, set `aws.vaultSecretPath` to `secret/aws` in values.
-3. If your engine is KV v2, keep `aws.vaultSecretPath` as `secret/data/aws` and write the secret with `vault kv put secret/aws ...`.
+1. Confirm the secret exists in Vault: `vault kv get secret/aws`.
+2. Ensure chart values match that command:
+    - `aws.vaultKvMount: secret`
+    - `aws.vaultSecretName: aws`
+3. Re-run Helm upgrade so runner pods get the updated TF vars.
+4. If it still fails, verify you are reading from the same Vault namespace and server address used by the pod.

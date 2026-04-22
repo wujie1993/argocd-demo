@@ -11,9 +11,11 @@ serviceAccount: "aws-ec2"
 aws:
   region: us-east-1
   credsSecret: aws-creds
-  # KV v2 example: secret/data/aws
-  # KV v1 example: secret/aws
-  vaultSecretPath: secret/data/aws
+  # Vault KV v2 settings. For `vault kv get secret/aws`:
+  # - vaultKvMount should be `secret`
+  # - vaultSecretName should be `aws`
+  vaultKvMount: secret
+  vaultSecretName: aws
 ec2:
   name: aws-ec2
   instanceType: t3.micro

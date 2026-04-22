@@ -28,15 +28,16 @@ provider "vault" {
   }
 }
 
-# 2. 从 KV-V2 引擎读取 AWS 凭证
-data "vault_generic_secret" "aws_creds" {
-  path = var.vault_aws_secret_path
+# 2. Read AWS credentials from KV v2 using explicit mount + secret name.
+data "vault_kv_secret_v2" "aws_creds" {
+  mount = var.vault_kv_mount
+  name  = var.vault_aws_secret_name
 }
 
 provider "aws" {
   region = var.aws_region
-  access_key = data.vault_generic_secret.aws_creds.data["ak"]
-  secret_key = data.vault_generic_secret.aws_creds.data["sk"]
+  access_key = data.vault_kv_secret_v2.aws_creds.data["ak"]
+  secret_key = data.vault_kv_secret_v2.aws_creds.data["sk"]
 }
 
 data "aws_caller_identity" "current" {}
@@ -154,7 +155,12 @@ variable "vault_kubernetes_jwt" {
   default   = ""
 }
 
-variable "vault_aws_secret_path" {
+variable "vault_kv_mount" {
   type    = string
-  default = "secret/data/aws"
+  default = "secret"
+}
+
+variable "vault_aws_secret_name" {
+  type    = string
+  default = "aws"
 }
