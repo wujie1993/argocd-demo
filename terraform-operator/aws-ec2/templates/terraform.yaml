@@ -32,16 +32,17 @@ spec:
   taskOptions:
   - for: ["plan", "apply", "plan-delete", "apply-delete"]
     env:
-    - name: AWS_ACCESS_KEY_ID
-      valueFrom:
-        secretKeyRef:
-          name: {{ .Values.aws.credsSecret }}
-          key: access-key
-    - name: AWS_SECRET_ACCESS_KEY
-      valueFrom:
-        secretKeyRef:
-          name: {{ .Values.aws.credsSecret }}
-          key: secret-key
+    #  - AWS credentials are intentionally not injected to avoid accidental exposure in logs or outputs.
+    # - name: AWS_ACCESS_KEY_ID
+    #   valueFrom:
+    #     secretKeyRef:
+    #       name: {{ .Values.aws.credsSecret }}
+    #       key: access-key
+    # - name: AWS_SECRET_ACCESS_KEY
+    #   valueFrom:
+    #     secretKeyRef:
+    #       name: {{ .Values.aws.credsSecret }}
+    #       key: secret-key
     - name: AWS_REGION
       value: {{ .Values.aws.region }}
     - name: TF_VAR_aws_region
