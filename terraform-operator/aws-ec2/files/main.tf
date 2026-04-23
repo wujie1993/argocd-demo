@@ -22,30 +22,47 @@ provider "vault" {
     path = "auth/kubernetes/login"
 
     parameters = {
-      role = "aws-ec2"
+      role = var.vault_kubernetes_auth_role
       jwt  = file("/var/run/secrets/kubernetes.io/serviceaccount/token")
     }
   }
 }
 
-data "vault_kv_secret_v2" "aws_creds" {
-  count = var.credentials_source == "vault" ? 1 : 0
+data "vault_aws_access_credentials" "aws_creds" {
+  count   = var.credentials_source == "vault-dynamic" ? 1 : 0
+  backend = var.vault_aws_backend
+  role    = var.vault_aws_role
+  type    = var.vault_aws_type
+}
+
+data "vault_kv_secret_v2" "aws_static_creds" {
+  count = var.credentials_source == "vault-static" ? 1 : 0
   mount = var.vault_kv_mount
-  name  = var.vault_aws_secret_name
+  name  = var.vault_kv_secret_name
 }
 
 locals {
-  # When source is "vault", pull credentials from the KV v2 data source.
-  # When source is "env", pass null so the AWS provider falls back to
-  # the AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY environment variables.
-  aws_access_key = var.credentials_source == "vault" ? data.vault_kv_secret_v2.aws_creds[0].data["ak"] : null
-  aws_secret_key = var.credentials_source == "vault" ? data.vault_kv_secret_v2.aws_creds[0].data["sk"] : null
+  # env            -> use AWS_* environment variables from Kubernetes secret
+  # vault-static   -> read AK/SK from Vault KV v2
+  # vault-dynamic  -> read short-lived AK/SK(+token) from Vault AWS Secrets Engine
+  aws_access_key = (
+    var.credentials_source == "vault-dynamic" ? data.vault_aws_access_credentials.aws_creds[0].access_key :
+    var.credentials_source == "vault-static" ? data.vault_kv_secret_v2.aws_static_creds[0].data[var.vault_static_access_key_field] :
+    null
+  )
+  aws_secret_key = (
+    var.credentials_source == "vault-dynamic" ? data.vault_aws_access_credentials.aws_creds[0].secret_key :
+    var.credentials_source == "vault-static" ? data.vault_kv_secret_v2.aws_static_creds[0].data[var.vault_static_secret_key_field] :
+    null
+  )
+  aws_session_token = var.credentials_source == "vault-dynamic" ? try(data.vault_aws_access_credentials.aws_creds[0].security_token, null) : null
 }
 
 provider "aws" {
   region     = var.aws_region
   access_key = local.aws_access_key
   secret_key = local.aws_secret_key
+  token      = local.aws_session_token
 }
 
 data "aws_caller_identity" "current" {}
@@ -158,9 +175,15 @@ variable "ec2_instance_type" {
 
 variable "credentials_source" {
   type    = string
-  default = "vault"
-  # "vault" - read AWS credentials from Vault KV v2
-  # "env"   - use AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY env vars
+  default = "vault-dynamic"
+  # "env"           - use AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY env vars
+  # "vault-static"  - read AWS AK/SK from Vault KV v2 secret
+  # "vault-dynamic" - read dynamic AWS creds from Vault AWS Secrets Engine
+
+  validation {
+    condition     = contains(["env", "vault-static", "vault-dynamic"], var.credentials_source)
+    error_message = "credentials_source must be one of: env, vault-static, vault-dynamic."
+  }
 }
 
 variable "vault_kv_mount" {
@@ -168,7 +191,37 @@ variable "vault_kv_mount" {
   default = "secret"
 }
 
-variable "vault_aws_secret_name" {
+variable "vault_kv_secret_name" {
   type    = string
   default = "aws"
+}
+
+variable "vault_static_access_key_field" {
+  type    = string
+  default = "ak"
+}
+
+variable "vault_static_secret_key_field" {
+  type    = string
+  default = "sk"
+}
+
+variable "vault_aws_backend" {
+  type    = string
+  default = "aws"
+}
+
+variable "vault_aws_role" {
+  type    = string
+  default = "aws-ec2"
+}
+
+variable "vault_aws_type" {
+  type    = string
+  default = "creds"
+}
+
+variable "vault_kubernetes_auth_role" {
+  type    = string
+  default = "aws-ec2"
 }

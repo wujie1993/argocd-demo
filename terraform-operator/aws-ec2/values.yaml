@@ -7,16 +7,27 @@ approval:
 
 aws:
   region: us-east-1
-  # "vault" - read credentials from Vault KV v2 (requires Vault setup)
-  # "env"   - inject credentials from a Kubernetes secret as env vars
-  credentialsSource: vault
+  # "env"           - inject credentials from a Kubernetes secret as env vars
+  # "vault-static"  - read static AK/SK from Vault KV v2
+  # "vault-dynamic" - read dynamic creds from Vault AWS Secrets Engine
+  credentialsSource: vault-dynamic
   # Used when credentialsSource is "env".
   # Secret must have keys: access-key, secret-key
   credsSecret: aws-creds
-  # Used when credentialsSource is "vault".
-  # Matches: vault kv get <vaultKvMount>/<vaultSecretName>
+  # Used when credentialsSource is "vault-static".
+  # Matches: vault kv get <vaultKvMount>/<vaultKvSecretName>
   vaultKvMount: secret
-  vaultSecretName: aws
+  vaultKvSecretName: aws
+  vaultStaticAccessKeyField: ak
+  vaultStaticSecretKeyField: sk
+  # Used when credentialsSource is "vault-dynamic".
+  # Matches: vault read <vaultAwsBackend>/creds/<vaultAwsRole>
+  vaultAwsBackend: aws
+  vaultAwsRole: aws-ec2
+  # creds (iam_user) or sts (assumed_role)
+  vaultAwsType: creds
+  # Vault Kubernetes auth role used by Terraform runner login.
+  vaultKubernetesAuthRole: aws-ec2
 
 ec2:
   name: aws-ec2

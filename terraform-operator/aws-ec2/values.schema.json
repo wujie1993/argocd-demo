@@ -1,0 +1,178 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "aws-ec2 chart values",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "serviceAccount": {
+      "type": "string",
+      "minLength": 1
+    },
+    "approval": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        }
+      }
+    },
+    "aws": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "region",
+        "credentialsSource"
+      ],
+      "properties": {
+        "region": {
+          "type": "string",
+          "minLength": 1
+        },
+        "credentialsSource": {
+          "type": "string",
+          "enum": [
+            "env",
+            "vault-static",
+            "vault-dynamic"
+          ]
+        },
+        "credsSecret": {
+          "type": "string",
+          "minLength": 1
+        },
+        "vaultKvMount": {
+          "type": "string",
+          "minLength": 1
+        },
+        "vaultKvSecretName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "vaultStaticAccessKeyField": {
+          "type": "string",
+          "minLength": 1
+        },
+        "vaultStaticSecretKeyField": {
+          "type": "string",
+          "minLength": 1
+        },
+        "vaultAwsBackend": {
+          "type": "string",
+          "minLength": 1
+        },
+        "vaultAwsRole": {
+          "type": "string",
+          "minLength": 1
+        },
+        "vaultAwsType": {
+          "type": "string",
+          "enum": [
+            "creds",
+            "sts"
+          ]
+        },
+        "vaultKubernetesAuthRole": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "credentialsSource": {
+                "const": "env"
+              }
+            },
+            "required": [
+              "credentialsSource"
+            ]
+          },
+          "then": {
+            "required": [
+              "credsSecret"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "credentialsSource": {
+                "const": "vault-static"
+              }
+            },
+            "required": [
+              "credentialsSource"
+            ]
+          },
+          "then": {
+            "required": [
+              "vaultKvMount",
+              "vaultKvSecretName",
+              "vaultStaticAccessKeyField",
+              "vaultStaticSecretKeyField",
+              "vaultKubernetesAuthRole"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "credentialsSource": {
+                "const": "vault-dynamic"
+              }
+            },
+            "required": [
+              "credentialsSource"
+            ]
+          },
+          "then": {
+            "required": [
+              "vaultAwsBackend",
+              "vaultAwsRole",
+              "vaultAwsType",
+              "vaultKubernetesAuthRole"
+            ]
+          }
+        }
+      ]
+    },
+    "ec2": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "name",
+        "instanceType"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "instanceType": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "terraform": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "version"
+      ],
+      "properties": {
+        "version": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  },
+  "required": [
+    "aws",
+    "ec2",
+    "terraform"
+  ]
+}

@@ -45,6 +45,8 @@ spec:
       value: {{ .Values.ec2.instanceType | quote }}
     - name: TF_VAR_credentials_source
       value: {{ .Values.aws.credentialsSource | quote }}
+    - name: TF_VAR_vault_kubernetes_auth_role
+      value: {{ .Values.aws.vaultKubernetesAuthRole | quote }}
     {{- if eq .Values.aws.credentialsSource "env" }}
     - name: AWS_ACCESS_KEY_ID
       valueFrom:
@@ -57,9 +59,21 @@ spec:
           name: {{ .Values.aws.credsSecret }}
           key: secret-key
     {{- end }}
-    {{- if eq .Values.aws.credentialsSource "vault" }}
+    {{- if eq .Values.aws.credentialsSource "vault-static" }}
     - name: TF_VAR_vault_kv_mount
       value: {{ .Values.aws.vaultKvMount | quote }}
-    - name: TF_VAR_vault_aws_secret_name
-      value: {{ .Values.aws.vaultSecretName | quote }}
+    - name: TF_VAR_vault_kv_secret_name
+      value: {{ .Values.aws.vaultKvSecretName | quote }}
+    - name: TF_VAR_vault_static_access_key_field
+      value: {{ .Values.aws.vaultStaticAccessKeyField | quote }}
+    - name: TF_VAR_vault_static_secret_key_field
+      value: {{ .Values.aws.vaultStaticSecretKeyField | quote }}
+    {{- end }}
+    {{- if eq .Values.aws.credentialsSource "vault-dynamic" }}
+    - name: TF_VAR_vault_aws_backend
+      value: {{ .Values.aws.vaultAwsBackend | quote }}
+    - name: TF_VAR_vault_aws_role
+      value: {{ .Values.aws.vaultAwsRole | quote }}
+    - name: TF_VAR_vault_aws_type
+      value: {{ .Values.aws.vaultAwsType | quote }}
     {{- end }}
