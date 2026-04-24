@@ -25,7 +25,7 @@ aws:
   vaultAwsBackend: aws
   vaultAwsRole: aws-ec2
   # creds (iam_user, requires the extra IAM/KMS actions documented in README) or sts (assumed_role)
-  vaultAwsType: creds
+  vaultAwsType: sts
   # Vault Kubernetes auth role used by Terraform runner login.
   vaultKubernetesAuthRole: aws-ec2
 
