@@ -259,6 +259,17 @@ The Vault provider is configured with `skip_child_token = true`, so it reuses th
 2. Verify Kubernetes auth role includes that policy.
 3. Verify chart values match backend/role (`vaultAwsBackend`, `vaultAwsRole`, `vaultAwsType`).
 
+### `AccessDenied` for `iam:GetUser` during plan
+
+When using Vault dynamic credentials (`credential_type="iam_user"`), the generated IAM user is often intentionally scoped and may not include `iam:GetUser`.
+
+This chart sets `skip_credentials_validation = true` in the AWS provider so Terraform does not require `iam:GetUser` during provider initialization.
+
+If you still see auth errors after this, verify the runtime credentials allow:
+
+1. `sts:GetCallerIdentity` (used by `data.aws_caller_identity.current`)
+2. The EC2/IAM/KMS actions required by this module
+
 ### `no secret found` in `vault-static` mode
 
 1. Verify secret exists: `vault kv get <mount>/<name>`.

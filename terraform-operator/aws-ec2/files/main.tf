@@ -63,6 +63,9 @@ provider "aws" {
   access_key = local.aws_access_key
   secret_key = local.aws_secret_key
   token      = local.aws_session_token
+  # Vault dynamic credentials are typically scoped and may not include iam:GetUser.
+  # Skip provider preflight credential validation to avoid requiring extra IAM permissions.
+  skip_credentials_validation = true
 }
 
 data "aws_caller_identity" "current" {}
