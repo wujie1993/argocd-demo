@@ -110,6 +110,9 @@ vault write aws/roles/aws-ec2 \
                 "iam:CreateRole",
                 "iam:DeleteRole",
                 "iam:GetRole",
+                "iam:GetUser",
+                "iam:ListRolePolicies",
+                "iam:GetRolePolicy",
                 "iam:TagRole",
                 "iam:UntagRole",
                 "iam:PassRole",
@@ -124,6 +127,10 @@ vault write aws/roles/aws-ec2 \
                 "iam:ListInstanceProfilesForRole",
                 "kms:CreateKey",
                 "kms:DescribeKey",
+                "kms:GetKeyPolicy",
+                "kms:GetKeyRotationStatus",
+                "kms:ListAliases",
+                "kms:ListResourceTags",
                 "kms:EnableKeyRotation",
                 "kms:PutKeyPolicy",
                 "kms:ScheduleKeyDeletion",
@@ -141,7 +148,13 @@ vault write aws/roles/aws-ec2 \
 EOF
 ```
 
+Important: when `aws.vaultAwsType` is `creds` (`credential_type="iam_user"`), Terraform's `vault_aws_access_credentials` data source validates newly issued credentials by calling `iam:GetUser`. If this action is missing, plan fails while reading Vault creds.
+
 This policy can be tightened for production, but missing IAM/KMS actions will cause Terraform apply failures for this chart.
+
+If Terraform is managing existing resources (or refreshing prior state), include the read/list permissions above as well. Without them, plan can fail during refresh with errors such as `iam:ListRolePolicies`, `kms:GetKeyPolicy`, or `kms:ListAliases`.
+
+The Terraform module also configures the KMS key policy so EC2/EBS can use the customer-managed key for the instance root volume in the current account and region.
 
 Create runner read policy for `creds` path:
 
@@ -263,12 +276,31 @@ The Vault provider is configured with `skip_child_token = true`, so it reuses th
 
 When using Vault dynamic credentials (`credential_type="iam_user"`), the generated IAM user is often intentionally scoped and may not include `iam:GetUser`.
 
-This chart sets `skip_credentials_validation = true` in the AWS provider so Terraform does not require `iam:GetUser` during provider initialization.
+This chart sets `skip_credentials_validation = true` in the AWS provider so Terraform does not require `iam:GetUser` during AWS provider initialization.
+
+However, `data.vault_aws_access_credentials` still validates `type="creds"` credentials with `iam:GetUser`. Ensure your Vault AWS role policy includes `iam:GetUser`.
 
 If you still see auth errors after this, verify the runtime credentials allow:
 
 1. `sts:GetCallerIdentity` (used by `data.aws_caller_identity.current`)
 2. The EC2/IAM/KMS actions required by this module
+
+### `AccessDenied` for IAM/KMS read actions during refresh
+
+Terraform refresh reads existing resource state before deciding changes. Ensure the Vault-issued AWS credentials include read/list actions for managed resources, including:
+
+1. `iam:ListRolePolicies` and `iam:GetRolePolicy`
+2. `kms:GetKeyPolicy`, `kms:GetKeyRotationStatus`, `kms:ListAliases`, and `kms:ListResourceTags`
+
+### `Client.InvalidKMSKey.InvalidState` while creating the EC2 instance
+
+This usually means the root EBS volume could not use the configured customer-managed KMS key.
+
+Checks:
+
+1. Verify the KMS key is enabled and not pending deletion.
+2. Verify the key policy allows EC2/EBS use in the current account and region.
+3. Re-run apply after the updated key policy from this module has been applied.
 
 ### `no secret found` in `vault-static` mode
 

@@ -81,6 +81,90 @@ data "aws_iam_policy_document" "ec2_assume_role" {
   }
 }
 
+data "aws_iam_policy_document" "ebs_kms_key" {
+  statement {
+    sid    = "EnableRootPermissions"
+    effect = "Allow"
+
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+
+    actions   = ["kms:*"]
+    resources = ["*"]
+  }
+
+  # Allow EC2/EBS in this account and region to use the key for encrypted volumes.
+  statement {
+    sid    = "AllowEC2UseOfTheKey"
+    effect = "Allow"
+
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+
+    actions = [
+      "kms:Decrypt",
+      "kms:DescribeKey",
+      "kms:Encrypt",
+      "kms:GenerateDataKey*",
+      "kms:ReEncrypt*",
+    ]
+
+    resources = ["*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "kms:CallerAccount"
+      values   = [data.aws_caller_identity.current.account_id]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "kms:ViaService"
+      values   = ["ec2.${var.aws_region}.amazonaws.com"]
+    }
+  }
+
+  statement {
+    sid    = "AllowEC2GrantManagement"
+    effect = "Allow"
+
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+
+    actions = [
+      "kms:CreateGrant",
+      "kms:ListGrants",
+      "kms:RevokeGrant",
+    ]
+
+    resources = ["*"]
+
+    condition {
+      test     = "Bool"
+      variable = "kms:GrantIsForAWSResource"
+      values   = ["true"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "kms:CallerAccount"
+      values   = [data.aws_caller_identity.current.account_id]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "kms:ViaService"
+      values   = ["ec2.${var.aws_region}.amazonaws.com"]
+    }
+  }
+}
+
 data "aws_ami" "ubuntu" {
   most_recent = true
 
@@ -117,20 +201,7 @@ resource "aws_iam_instance_profile" "app_server" {
 resource "aws_kms_key" "ebs" {
   description         = "KMS key for ${var.ec2_name} EC2 root volume encryption"
   enable_key_rotation = true
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid    = "EnableRootPermissions"
-        Effect = "Allow"
-        Principal = {
-          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
-        }
-        Action   = "kms:*"
-        Resource = "*"
-      }
-    ]
-  })
+  policy              = data.aws_iam_policy_document.ebs_kms_key.json
 
   tags = {
     Name = "${var.ec2_name}-ebs"
