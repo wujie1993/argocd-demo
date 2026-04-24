@@ -45,6 +45,13 @@ locals {
   # env            -> use AWS_* environment variables from Kubernetes secret
   # vault-static   -> read AK/SK from Vault KV v2
   # vault-dynamic  -> read short-lived AK/SK(+token) from Vault AWS Secrets Engine
+  role_name             = "${var.ec2_name}-role"
+  instance_profile_name = "${var.ec2_name}-instance-profile"
+  kms_alias_name        = "alias/${var.ec2_name}-ebs"
+  kms_via_service       = "ec2.${var.aws_region}.amazonaws.com"
+  common_tags = {
+    Name = var.ec2_name
+  }
   aws_access_key = (
     var.credentials_source == "vault-dynamic" ? data.vault_aws_access_credentials.aws_creds[0].access_key :
     var.credentials_source == "vault-static" ? data.vault_kv_secret_v2.aws_static_creds[0].data[var.vault_static_access_key_field] :
@@ -124,7 +131,7 @@ data "aws_iam_policy_document" "ebs_kms_key" {
     condition {
       test     = "StringEquals"
       variable = "kms:ViaService"
-      values   = ["ec2.${var.aws_region}.amazonaws.com"]
+      values   = [local.kms_via_service]
     }
   }
 
@@ -160,7 +167,7 @@ data "aws_iam_policy_document" "ebs_kms_key" {
     condition {
       test     = "StringEquals"
       variable = "kms:ViaService"
-      values   = ["ec2.${var.aws_region}.amazonaws.com"]
+      values   = [local.kms_via_service]
     }
   }
 }
@@ -177,11 +184,11 @@ data "aws_ami" "ubuntu" {
 }
 
 resource "aws_iam_role" "app_server" {
-  name               = "${var.ec2_name}-role"
+  name               = local.role_name
   assume_role_policy = data.aws_iam_policy_document.ec2_assume_role.json
 
   tags = {
-    Name = "${var.ec2_name}-role"
+    Name = local.role_name
   }
 }
 
@@ -191,7 +198,7 @@ resource "aws_iam_role_policy_attachment" "ssm_managed_instance_core" {
 }
 
 resource "aws_iam_instance_profile" "app_server" {
-  name = "${var.ec2_name}-instance-profile"
+  name = local.instance_profile_name
   role = aws_iam_role.app_server.name
 }
 
@@ -209,7 +216,7 @@ resource "aws_kms_key" "ebs" {
 }
 
 resource "aws_kms_alias" "ebs" {
-  name          = "alias/${var.ec2_name}-ebs"
+  name          = local.kms_alias_name
   target_key_id = aws_kms_key.ebs.key_id
 }
 
@@ -230,24 +237,26 @@ resource "aws_instance" "app_server" {
     kms_key_id = aws_kms_key.ebs.arn
   }
 
-  tags = {
-    Name = var.ec2_name
-  }
+  tags = local.common_tags
 }
 
 variable "aws_region" {
-  type = string
+  description = "AWS region where Terraform will manage resources."
+  type        = string
 }
 
 variable "ec2_name" {
-  type = string
+  description = "Base name used for the EC2 instance and related AWS resources."
+  type        = string
 }
 
 variable "ec2_instance_type" {
-  type = string
+  description = "EC2 instance type for the application server."
+  type        = string
 }
 
 variable "credentials_source" {
+  description = "Source of AWS credentials for Terraform: env, vault-static, or vault-dynamic."
   type    = string
   default = "vault-dynamic"
   # "env"           - use AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY env vars
@@ -261,41 +270,49 @@ variable "credentials_source" {
 }
 
 variable "vault_kv_mount" {
+  description = "Vault KV v2 mount containing static AWS credentials."
   type    = string
   default = "secret"
 }
 
 variable "vault_kv_secret_name" {
+  description = "Vault KV v2 secret name containing static AWS credentials."
   type    = string
   default = "aws"
 }
 
 variable "vault_static_access_key_field" {
+  description = "Field name in the Vault KV secret that stores the AWS access key."
   type    = string
   default = "ak"
 }
 
 variable "vault_static_secret_key_field" {
+  description = "Field name in the Vault KV secret that stores the AWS secret key."
   type    = string
   default = "sk"
 }
 
 variable "vault_aws_backend" {
+  description = "Vault AWS secrets engine mount used for dynamic credentials."
   type    = string
   default = "aws"
 }
 
 variable "vault_aws_role" {
+  description = "Vault AWS secrets engine role used to issue dynamic credentials."
   type    = string
   default = "aws-ec2"
 }
 
 variable "vault_aws_type" {
+  description = "Dynamic Vault AWS credential type: creds for IAM users or sts for assumed roles."
   type    = string
   default = "creds"
 }
 
 variable "vault_kubernetes_auth_role" {
+  description = "Vault Kubernetes auth role used by the Terraform runner pod."
   type    = string
   default = "aws-ec2"
 }

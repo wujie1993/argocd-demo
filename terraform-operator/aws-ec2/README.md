@@ -272,35 +272,25 @@ The Vault provider is configured with `skip_child_token = true`, so it reuses th
 2. Verify Kubernetes auth role includes that policy.
 3. Verify chart values match backend/role (`vaultAwsBackend`, `vaultAwsRole`, `vaultAwsType`).
 
-### `AccessDenied` for `iam:GetUser` during plan
+### AWS permission and KMS errors
 
-When using Vault dynamic credentials (`credential_type="iam_user"`), the generated IAM user is often intentionally scoped and may not include `iam:GetUser`.
+Use the failing API action in the Terraform output to identify which stage is blocked.
 
-This chart sets `skip_credentials_validation = true` in the AWS provider so Terraform does not require `iam:GetUser` during AWS provider initialization.
+1. `iam:GetUser` while reading `data.vault_aws_access_credentials`
+    This happens only in `vault-dynamic` with `aws.vaultAwsType=creds` (`credential_type="iam_user"`).
+    The AWS provider is configured with `skip_credentials_validation = true`, but the Vault data source still validates issued IAM-user credentials with `iam:GetUser`.
+    Ensure the Vault AWS role policy includes `iam:GetUser`.
+2. `iam:ListRolePolicies`, `iam:GetRolePolicy`, `kms:GetKeyPolicy`, `kms:GetKeyRotationStatus`, `kms:ListAliases`, or `kms:ListResourceTags` during plan/apply refresh
+    Terraform refresh reads existing AWS resources before deciding changes.
+    Ensure the Vault-issued credentials include the IAM and KMS read/list actions documented in the `iam_user` policy example above.
+3. `Client.InvalidKMSKey.InvalidState` while creating the EC2 instance
+    The root EBS volume could not use the configured customer-managed KMS key.
+    Verify the KMS key is enabled, not pending deletion, and that the key policy allows EC2/EBS use in the current account and region.
 
-However, `data.vault_aws_access_credentials` still validates `type="creds"` credentials with `iam:GetUser`. Ensure your Vault AWS role policy includes `iam:GetUser`.
+For any AWS auth error, also confirm the runtime credentials still allow:
 
-If you still see auth errors after this, verify the runtime credentials allow:
-
-1. `sts:GetCallerIdentity` (used by `data.aws_caller_identity.current`)
+1. `sts:GetCallerIdentity` for `data.aws_caller_identity.current`
 2. The EC2/IAM/KMS actions required by this module
-
-### `AccessDenied` for IAM/KMS read actions during refresh
-
-Terraform refresh reads existing resource state before deciding changes. Ensure the Vault-issued AWS credentials include read/list actions for managed resources, including:
-
-1. `iam:ListRolePolicies` and `iam:GetRolePolicy`
-2. `kms:GetKeyPolicy`, `kms:GetKeyRotationStatus`, `kms:ListAliases`, and `kms:ListResourceTags`
-
-### `Client.InvalidKMSKey.InvalidState` while creating the EC2 instance
-
-This usually means the root EBS volume could not use the configured customer-managed KMS key.
-
-Checks:
-
-1. Verify the KMS key is enabled and not pending deletion.
-2. Verify the key policy allows EC2/EBS use in the current account and region.
-3. Re-run apply after the updated key policy from this module has been applied.
 
 ### `no secret found` in `vault-static` mode
 

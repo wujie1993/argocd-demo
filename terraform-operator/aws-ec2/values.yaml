@@ -24,7 +24,7 @@ aws:
   # Matches: vault read <vaultAwsBackend>/creds/<vaultAwsRole>
   vaultAwsBackend: aws
   vaultAwsRole: aws-ec2
-  # creds (iam_user, requires iam:GetUser in issued policy) or sts (assumed_role)
+  # creds (iam_user, requires the extra IAM/KMS actions documented in README) or sts (assumed_role)
   vaultAwsType: creds
   # Vault Kubernetes auth role used by Terraform runner login.
   vaultKubernetesAuthRole: aws-ec2

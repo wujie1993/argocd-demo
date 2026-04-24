@@ -1,9 +1,12 @@
+{{- $aws := .Values.aws -}}
+{{- $ec2 := .Values.ec2 -}}
+{{- $terraform := .Values.terraform -}}
 apiVersion: tf.galleybytes.com/v1beta1
 kind: Terraform
 metadata:
-  name: {{ .Values.ec2.name }}
+  name: {{ $ec2.name }}
 spec:
-  terraformVersion: {{ .Values.terraform.version }}
+  terraformVersion: {{ $terraform.version | quote }}
   {{- if .Values.serviceAccount }}
   serviceAccount: {{ .Values.serviceAccount | quote }}
   {{- end }}
@@ -20,13 +23,13 @@ spec:
   backend: |-
     terraform {
       backend "kubernetes" {
-        secret_suffix    = "{{ .Values.ec2.name }}"
+        secret_suffix     = "{{ $ec2.name }}"
         namespace        = "{{ .Release.Namespace }}"
         in_cluster_config = true
       }
     }
 
-  outputsSecret: "{{ .Values.ec2.name }}-outputs"
+  outputsSecret: "{{ $ec2.name }}-outputs"
 
   terraformModule:
     inline: |-
@@ -36,44 +39,44 @@ spec:
   - for: ["plan", "apply", "plan-delete", "apply-delete"]
     env:
     - name: AWS_REGION
-      value: {{ .Values.aws.region }}
+      value: {{ $aws.region | quote }}
     - name: TF_VAR_aws_region
-      value: {{ .Values.aws.region }}
+      value: {{ $aws.region | quote }}
     - name: TF_VAR_ec2_name
-      value: {{ .Values.ec2.name | quote }}
+      value: {{ $ec2.name | quote }}
     - name: TF_VAR_ec2_instance_type
-      value: {{ .Values.ec2.instanceType | quote }}
+      value: {{ $ec2.instanceType | quote }}
     - name: TF_VAR_credentials_source
-      value: {{ .Values.aws.credentialsSource | quote }}
+      value: {{ $aws.credentialsSource | quote }}
     - name: TF_VAR_vault_kubernetes_auth_role
-      value: {{ .Values.aws.vaultKubernetesAuthRole | quote }}
-    {{- if eq .Values.aws.credentialsSource "env" }}
+      value: {{ $aws.vaultKubernetesAuthRole | quote }}
+    {{- if eq $aws.credentialsSource "env" }}
     - name: AWS_ACCESS_KEY_ID
       valueFrom:
         secretKeyRef:
-          name: {{ .Values.aws.credsSecret }}
+          name: {{ $aws.credsSecret }}
           key: access-key
     - name: AWS_SECRET_ACCESS_KEY
       valueFrom:
         secretKeyRef:
-          name: {{ .Values.aws.credsSecret }}
+          name: {{ $aws.credsSecret }}
           key: secret-key
     {{- end }}
-    {{- if eq .Values.aws.credentialsSource "vault-static" }}
+    {{- if eq $aws.credentialsSource "vault-static" }}
     - name: TF_VAR_vault_kv_mount
-      value: {{ .Values.aws.vaultKvMount | quote }}
+      value: {{ $aws.vaultKvMount | quote }}
     - name: TF_VAR_vault_kv_secret_name
-      value: {{ .Values.aws.vaultKvSecretName | quote }}
+      value: {{ $aws.vaultKvSecretName | quote }}
     - name: TF_VAR_vault_static_access_key_field
-      value: {{ .Values.aws.vaultStaticAccessKeyField | quote }}
+      value: {{ $aws.vaultStaticAccessKeyField | quote }}
     - name: TF_VAR_vault_static_secret_key_field
-      value: {{ .Values.aws.vaultStaticSecretKeyField | quote }}
+      value: {{ $aws.vaultStaticSecretKeyField | quote }}
     {{- end }}
-    {{- if eq .Values.aws.credentialsSource "vault-dynamic" }}
+    {{- if eq $aws.credentialsSource "vault-dynamic" }}
     - name: TF_VAR_vault_aws_backend
-      value: {{ .Values.aws.vaultAwsBackend | quote }}
+      value: {{ $aws.vaultAwsBackend | quote }}
     - name: TF_VAR_vault_aws_role
-      value: {{ .Values.aws.vaultAwsRole | quote }}
+      value: {{ $aws.vaultAwsRole | quote }}
     - name: TF_VAR_vault_aws_type
-      value: {{ .Values.aws.vaultAwsType | quote }}
+      value: {{ $aws.vaultAwsType | quote }}
     {{- end }}
