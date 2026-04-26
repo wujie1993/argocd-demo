@@ -1,5 +1,19 @@
 # IaC-demo
 
+## Fintech Hardening Tracker
+
+Status key: [ ] not started, [~] in progress, [x] completed.
+
+1. [ ] Remove long-lived IAM user key generation and secret outputs from bootstrap module.
+2. [ ] Replace broad workload permissions (for example ec2:* on *) with least-privilege actions and resource scoping.
+3. [ ] Enforce secure Vault transport (TLS) for provider connectivity.
+4. [ ] Add explicit network controls (VPC, subnet, security group ingress/egress) for EC2 workload resources.
+5. [ ] Define and document Terraform state controls for Kubernetes backend (encryption at rest, access boundaries, backup).
+6. [ ] Expand CI policy scanning coverage to include bootstrap Terraform modules and Kubernetes/Helm manifests.
+7. [ ] Align all runbooks/docs with the current architecture and remove stale bootstrap-state/S3 backend instructions.
+
+Execution order for this repository: 7, 1, 2, 3, 4, 5, 6.
+
 ## Terraform Bootstrap Workspaces
 
 This repository now includes two Terraform bootstrap workspaces to encapsulate AWS prerequisites:

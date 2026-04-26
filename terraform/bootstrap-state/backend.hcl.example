@@ -1,0 +1,6 @@
+bucket         = "your-org-terraform-state"
+key            = "bootstrap-state/terraform.tfstate"
+region         = "us-east-1"
+encrypt        = true
+kms_key_id     = "REPLACE_WITH_KMS_KEY_ARN_FROM_TERRAFORM_OUTPUT"
+dynamodb_table = "terraform-state-locks"

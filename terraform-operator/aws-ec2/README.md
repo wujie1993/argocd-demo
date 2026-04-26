@@ -2,6 +2,19 @@
 
 Helm chart to run Terraform via terraform-operator for a simple EC2 workload.
 
+The Terraform custom resource used by this chart is powered by GalleyBytes terraform-operator:
+https://github.com/GalleyBytes/terraform-operator
+
+## Fintech Hardening Checklist
+
+Status key: [ ] not started, [~] in progress, [x] completed.
+
+1. [ ] Use Vault dynamic STS only for this chart path and phase out env/vault-static options where possible.
+2. [ ] Enforce Vault TLS endpoint usage for provider communication.
+3. [ ] Add explicit EC2 networking controls (subnet and security groups with restricted ingress/egress).
+4. [ ] Document Kubernetes backend state controls and operational safeguards.
+5. [ ] Keep chart docs consistent with active backend and bootstrap flow.
+
 ## What It Provisions
 
 - EC2 instance

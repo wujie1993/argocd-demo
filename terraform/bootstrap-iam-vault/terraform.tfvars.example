@@ -14,5 +14,5 @@ create_vault_access_key = true
 tags = {
   project     = "iac-demo"
   managed_by  = "terraform"
-  environment = "prod"
+  environment = "demo"
 }

@@ -2,11 +2,13 @@
 
 Creates AWS IAM resources used by Vault AWS Secrets Engine and Terraform workloads.
 
+This module can start with local state and then migrate to the shared S3 backend created by `terraform/bootstrap-state`.
+
 ## What This Module Creates
 
 - IAM user for Vault source credentials (`vault_aws_user_name`)
 - IAM role assumed by Vault-issued credentials (`terraform_role_name`)
-- Inline policy on that role for EC2/IAM/KMS operations
+- Inline policy on that role for workload IAM/KMS operations
 - Optional IAM access key for the Vault IAM user
 
 ## Vault Prerequisites
@@ -61,7 +63,7 @@ vault write auth/kubernetes/role/aws-ec2 \
 
 ### Alternative Commands (vault-dynamic with iam_user)
 
-The following matches a working flow for `aws-ec2`:
+The following is an alternative path when using `vaultAwsType: creds`.
 
 ```bash
 vault write auth/kubernetes/config \
@@ -137,9 +139,9 @@ vault write auth/kubernetes/role/aws-ec2 \
 Use `vaultAwsType: creds` when using this `iam_user` mode.
 For production, prefer `vaultAwsType: sts` with a tightly scoped assumed role.
 
-### EC2 Permissions for the Bootstrap Role
+### Workload Permissions for the Bootstrap Role
 
-This module's default inline policy includes IAM/KMS/S3. Add EC2 permissions with `additional_terraform_policy_statements` in `terraform.tfvars`.
+This module's default inline policy includes workload IAM and KMS permissions. Add workload-specific AWS permissions with `additional_terraform_policy_statements` in `terraform.tfvars`.
 
 ```hcl
 additional_terraform_policy_statements = [
@@ -158,10 +160,48 @@ additional_terraform_policy_statements = [
 1. Copy terraform.tfvars.example to terraform.tfvars.
 2. Set aws_region and names for vault_aws_user_name, terraform_role_name, and workload_iam_name.
 3. Optionally add permissions through additional_terraform_policy_statements.
-4. Run terraform init, terraform plan, and terraform apply.
+4. For the first local run, use:
+
+```bash
+terraform init
+terraform apply
+```
+
+5. After `terraform/bootstrap-state` is applied and migrated, copy backend.hcl.example to backend.hcl.
+6. Set `bucket`, `region`, `dynamodb_table`, and `kms_key_id` from `terraform/bootstrap-state` outputs.
+7. Migrate state to S3:
+
+```bash
+terraform init -backend-config=backend.hcl -migrate-state
+```
+
+8. Run:
+
+```bash
+terraform plan
+terraform apply
+```
+
+9. After confirming remote state is active, remove leftover local state artifacts if present:
+
+```bash
+rm -f terraform.tfstate terraform.tfstate.backup
+```
+
+## Outputs
+
+This module exposes:
+
+- `account_id`
+- `vault_aws_user_arn`
+- `terraform_role_arn`
+- `vault_write_aws_role_command`
+- `vault_access_key_id`
+- `vault_secret_access_key`
 
 ## Security Notes
 
 - Prefer Vault dynamic STS credentials over static AK/SK.
 - Avoid AWS root access keys.
 - Keep additional policy statements least-privilege and resource-scoped.
+- Keep `backend.hcl` uncommitted; use the ignored `backend.hcl.example` as the template.

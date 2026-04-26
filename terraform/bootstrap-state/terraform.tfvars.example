@@ -1,0 +1,12 @@
+aws_region       = "us-east-1"
+state_bucket_name = "my-org-terraform-state-demo"
+lock_table_name   = "terraform-state-locks"
+create_lock_table = true
+force_destroy     = false
+
+# Keep retention-friendly tags for audit/compliance workflows.
+tags = {
+  project     = "iac-demo"
+  managed_by  = "terraform"
+  environment = "demo"
+}
