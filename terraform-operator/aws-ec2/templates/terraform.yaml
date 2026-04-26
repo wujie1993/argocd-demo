@@ -32,9 +32,6 @@ spec:
         {{- if $backend.s3.kmsKeyId }}
         kms_key_id = "{{ $backend.s3.kmsKeyId }}"
         {{- end }}
-        {{- if $backend.s3.useLockfile }}
-        use_lockfile = true
-        {{- end }}
       }
       {{- else }}
       backend "kubernetes" {

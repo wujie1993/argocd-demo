@@ -50,9 +50,6 @@ backend:
     # Optional: ARN of a KMS key for SSE-KMS encryption.
     # Leave empty to use SSE-S3 (AES-256).
     kmsKeyId: ""
-    # Enable S3 native state locking (requires Terraform >= 1.10).
-    # Stores a .tflock file next to the state; no DynamoDB needed.
-    useLockfile: true
 
 terraform:
   version: "1.5.5"

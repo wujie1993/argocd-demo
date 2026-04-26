@@ -65,12 +65,6 @@ aws:
   vaultKubernetesAuthRole: aws-ec2
 ```
 
-## Known Limitations
-
-- The current GalleyBytes `terraform-operator` task image family in use does not yet provide Terraform `>= 1.10` tags.
-- Because of that, native S3 lockfiles (`use_lockfile = true`) cannot be enabled yet for this chart.
-- Until the operator runtime version problem is resolved, use the current backend approach and treat native lockfile support as deferred work.
-
 ## Install
 
 ```bash
