@@ -175,9 +175,36 @@
       "properties": {
         "type": {
           "type": "string",
-          "enum": ["kubernetes"]
+          "enum": ["kubernetes", "s3"]
+        },
+        "s3": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "bucket": { "type": "string" },
+            "key": { "type": "string" },
+            "region": { "type": "string" },
+            "encrypt": { "type": "boolean" },
+            "kmsKeyId": { "type": "string" }
+          }
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "type": { "const": "s3" } },
+            "required": ["type"]
+          },
+          "then": {
+            "required": ["s3"],
+            "properties": {
+              "s3": {
+                "required": ["bucket", "key"]
+              }
+            }
+          }
+        }
+      ]
     }
   },
   "required": [

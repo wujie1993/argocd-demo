@@ -15,6 +15,18 @@ Status key: [ ] not started, [~] in progress, [x] completed.
 4. [ ] Document Kubernetes backend state controls and operational safeguards.
 5. [ ] Keep chart docs consistent with active backend and bootstrap flow.
 
+## Backend Modes
+
+This chart supports two Terraform backends:
+
+- `kubernetes`: stores state in a Kubernetes Secret in the release namespace
+- `s3`: stores state in S3
+
+Important constraint:
+
+- `backend.type: s3` requires `aws.credentialsSource: env`
+- `vault-static` and `vault-dynamic` do not work for S3 backend init in this chart, because Terraform backend initialization happens before Vault/KV-based credential resolution inside the Terraform module
+
 ## What It Provisions
 
 - EC2 instance
@@ -25,7 +37,7 @@ Status key: [ ] not started, [~] in progress, [x] completed.
 
 - Kubernetes cluster with terraform-operator installed
 - AWS account and permissions for this workload
-- Terraform state bucket already created (for example from `terraform/bootstrap-state`)
+- If using `backend.type: s3`, a Terraform state bucket must already exist (for example from `terraform/bootstrap-state`)
 
 ## Credential Sources
 
@@ -76,6 +88,32 @@ aws:
   vaultAwsRole: aws-ec2
   vaultAwsType: sts
   vaultKubernetesAuthRole: aws-ec2
+
+## Backend Examples
+
+### Kubernetes backend
+
+```yaml
+backend:
+  type: kubernetes
+```
+
+### S3 backend
+
+```yaml
+aws:
+  credentialsSource: env
+  credsSecret: aws-creds
+
+backend:
+  type: s3
+  s3:
+    bucket: 946232032642-terraform-state
+    key: aws-ec2/terraform.tfstate
+    region: us-east-1
+    encrypt: true
+    kmsKeyId: <KMS_KEY_ARN>
+```
 ```
 
 ## Install

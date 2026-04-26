@@ -1,6 +1,10 @@
 {{- $aws := .Values.aws -}}
 {{- $ec2 := .Values.ec2 -}}
 {{- $terraform := .Values.terraform -}}
+{{- $backend := .Values.backend -}}
+{{- if and (eq $backend.type "s3") (ne $aws.credentialsSource "env") -}}
+{{- fail "backend.type=s3 requires aws.credentialsSource=env because Terraform backend init needs AWS credentials before Vault/KV-based credential resolution is available" -}}
+{{- end -}}
 apiVersion: tf.galleybytes.com/v1beta1
 kind: Terraform
 metadata:
@@ -22,11 +26,23 @@ spec:
 
   backend: |-
     terraform {
+      {{- if eq $backend.type "s3" }}
+      backend "s3" {
+        bucket  = "{{ $backend.s3.bucket }}"
+        key     = "{{ $backend.s3.key }}"
+        region  = "{{ $backend.s3.region | default $aws.region }}"
+        encrypt = {{ $backend.s3.encrypt }}
+        {{- if $backend.s3.kmsKeyId }}
+        kms_key_id = "{{ $backend.s3.kmsKeyId }}"
+        {{- end }}
+      }
+      {{- else }}
       backend "kubernetes" {
         secret_suffix     = "{{ $ec2.name }}"
         namespace         = "{{ .Release.Namespace }}"
         in_cluster_config = true
       }
+      {{- end }}
     }
 
   outputsSecret: "{{ $ec2.name }}-outputs"
@@ -36,6 +52,22 @@ spec:
       {{ (.Files.Get "files/main.tf") | nindent 6 }}
 
   taskOptions:
+  - for: ["init"]
+    env:
+    - name: AWS_REGION
+      value: {{ $aws.region | quote }}
+    {{- if eq $aws.credentialsSource "env" }}
+    - name: AWS_ACCESS_KEY_ID
+      valueFrom:
+        secretKeyRef:
+          name: {{ $aws.credsSecret }}
+          key: access-key
+    - name: AWS_SECRET_ACCESS_KEY
+      valueFrom:
+        secretKeyRef:
+          name: {{ $aws.credsSecret }}
+          key: secret-key
+    {{- end }}
   - for: ["plan", "apply", "plan-delete", "apply-delete"]
     env:
     - name: AWS_REGION

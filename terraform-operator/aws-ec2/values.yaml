@@ -34,9 +34,16 @@ ec2:
   instanceType: t3.micro
 
 # Backend for Terraform state storage.
-# State is stored in a Kubernetes Secret in the release namespace.
+# "kubernetes" - store state in a Kubernetes Secret in the release namespace
+# "s3"         - store state in an S3 bucket
 backend:
   type: kubernetes
+  s3:
+    bucket: ""
+    key: "aws-ec2/terraform.tfstate"
+    region: ""
+    encrypt: true
+    kmsKeyId: ""
 
 terraform:
   version: "1.5.5"
