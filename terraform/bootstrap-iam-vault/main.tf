@@ -102,7 +102,10 @@ resource "aws_iam_role_policy" "terraform_permissions" {
           "kms:UpdateAlias",
           "kms:DeleteAlias"
         ]
-        Resource = [local.kms_alias_arn_pattern]
+        Resource = [
+          local.kms_alias_arn_pattern,
+          local.kms_key_arn_pattern
+        ]
       },
       {
         Effect = "Allow"
