@@ -20,26 +20,13 @@ spec:
   requireApproval: true
   {{- end }}
 
-  {{- $backend := .Values.backend }}
   backend: |-
     terraform {
-      {{- if eq $backend.type "s3" }}
-      backend "s3" {
-        bucket  = "{{ $backend.s3.bucket }}"
-        key     = "{{ $backend.s3.key }}"
-        region  = "{{ $backend.s3.region | default $aws.region }}"
-        encrypt = true
-        {{- if $backend.s3.kmsKeyId }}
-        kms_key_id = "{{ $backend.s3.kmsKeyId }}"
-        {{- end }}
-      }
-      {{- else }}
       backend "kubernetes" {
         secret_suffix     = "{{ $ec2.name }}"
         namespace         = "{{ .Release.Namespace }}"
         in_cluster_config = true
       }
-      {{- end }}
     }
 
   outputsSecret: "{{ $ec2.name }}-outputs"
