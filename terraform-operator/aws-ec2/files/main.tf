@@ -45,8 +45,8 @@ locals {
   # env            -> use AWS_* environment variables from Kubernetes secret
   # vault-static   -> read AK/SK from Vault KV v2
   # vault-dynamic  -> read short-lived AK/SK(+token) from Vault AWS Secrets Engine
-  role_name             = "${var.ec2_name}-role"
-  instance_profile_name = "${var.ec2_name}-instance-profile"
+  role_name             = var.ec2_name
+  instance_profile_name = var.ec2_name
   kms_alias_name        = "alias/${var.ec2_name}-ebs"
   kms_via_service       = "ec2.${var.aws_region}.amazonaws.com"
   common_tags = {

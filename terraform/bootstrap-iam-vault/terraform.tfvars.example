@@ -11,7 +11,7 @@ additional_terraform_policy_statements = []
 
 # Set true only when you intentionally want Terraform to create and store
 # a long-lived access key for Vault root config.
-create_vault_access_key = false
+create_vault_access_key = true
 
 tags = {
   project     = "iac-demo"
