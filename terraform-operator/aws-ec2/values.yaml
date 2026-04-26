@@ -33,5 +33,26 @@ ec2:
   name: aws-ec2
   instanceType: t3.micro
 
+# Backend for Terraform state storage.
+# "kubernetes" - store state in a Kubernetes secret (in-cluster, no extra setup)
+# "s3"         - store state in an S3 bucket (recommended; encrypted at rest)
+backend:
+  type: s3
+  s3:
+    # Required: name of the S3 bucket that holds Terraform state files.
+    bucket: ""
+    # Required: object key path inside the bucket.
+    key: "aws-ec2/terraform.tfstate"
+    # Region where the bucket lives. Defaults to aws.region when empty.
+    region: ""
+    # Enable S3 server-side encryption. Should always be true.
+    encrypt: true
+    # Optional: ARN of a KMS key for SSE-KMS encryption.
+    # Leave empty to use SSE-S3 (AES-256).
+    kmsKeyId: ""
+    # Enable S3 native state locking (requires Terraform >= 1.10).
+    # Stores a .tflock file next to the state; no DynamoDB needed.
+    useLockfile: true
+
 terraform:
-  version: "1.4.6"
+  version: "1.10.0"
