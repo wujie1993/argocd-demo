@@ -185,8 +185,7 @@
             "key": { "type": "string" },
             "region": { "type": "string" },
             "encrypt": { "type": "boolean" },
-            "kmsKeyId": { "type": "string" },
-            "useLockfile": { "type": "boolean" }
+            "kmsKeyId": { "type": "string" }
           }
         }
       },
