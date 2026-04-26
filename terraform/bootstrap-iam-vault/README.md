@@ -6,7 +6,7 @@ Creates AWS IAM resources used by Vault AWS Secrets Engine and Terraform workloa
 
 - IAM user for Vault source credentials (`vault_aws_user_name`)
 - IAM role assumed by Vault-issued credentials (`terraform_role_name`)
-- Inline policy on that role for EC2/IAM/KMS/S3 state operations
+- Inline policy on that role for EC2/IAM/KMS operations
 - Optional IAM access key for the Vault IAM user
 
 ## Vault Prerequisites
@@ -111,21 +111,6 @@ vault write aws/roles/aws-ec2 \
 			],
 			"Resource": "*"
 		},
-		{
-			"Effect": "Allow",
-			"Action": [
-				"s3:ListBucket"
-			],
-			"Resource": "arn:aws:s3:::<STATE_BUCKET_NAME>"
-		},
-		{
-			"Effect": "Allow",
-			"Action": [
-				"s3:GetObject",
-				"s3:PutObject",
-				"s3:DeleteObject"
-			],
-			"Resource": "arn:aws:s3:::<STATE_BUCKET_NAME>/<STATE_KEY_PREFIX>*"
 		}
 	]
 }
@@ -171,7 +156,7 @@ additional_terraform_policy_statements = [
 ## Terraform Usage
 
 1. Copy terraform.tfvars.example to terraform.tfvars.
-2. Set aws_region, state_bucket_name, and names for vault_aws_user_name and terraform_role_name.
+2. Set aws_region and names for vault_aws_user_name and terraform_role_name.
 3. Optionally add permissions through additional_terraform_policy_statements.
 4. Run terraform init, terraform plan, and terraform apply.
 

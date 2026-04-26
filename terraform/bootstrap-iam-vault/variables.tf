@@ -21,17 +21,6 @@ variable "terraform_role_name" {
   default     = "terraform-workload-role"
 }
 
-variable "state_bucket_name" {
-  description = "S3 bucket name used for Terraform state backend."
-  type        = string
-}
-
-variable "state_key_prefix" {
-  description = "State key prefix for this workload, for example aws-ec2/."
-  type        = string
-  default     = "aws-ec2/"
-}
-
 variable "create_vault_access_key" {
   description = "If true, create an access key for the Vault IAM user and expose it as sensitive output."
   type        = bool

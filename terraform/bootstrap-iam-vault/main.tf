@@ -6,8 +6,6 @@ data "aws_caller_identity" "current" {}
 
 locals {
   resolved_account_id = var.account_id != "" ? var.account_id : data.aws_caller_identity.current.account_id
-  normalized_prefix   = trim(var.state_key_prefix, "/")
-  object_prefix       = local.normalized_prefix != "" ? "${local.normalized_prefix}/" : ""
   terraform_role_arn  = "arn:aws:iam::${local.resolved_account_id}:role/${var.terraform_role_name}"
   terraform_instance_profile_arn = "arn:aws:iam::${local.resolved_account_id}:instance-profile/${var.terraform_role_name}"
   kms_key_arn_pattern            = "arn:aws:kms:${var.aws_region}:${local.resolved_account_id}:key/*"
@@ -114,20 +112,6 @@ resource "aws_iam_role_policy" "terraform_permissions" {
           "sts:GetCallerIdentity"
         ]
         Resource = ["*"]
-      },
-      {
-        Effect = "Allow"
-        Action = ["s3:ListBucket"]
-        Resource = ["arn:aws:s3:::${var.state_bucket_name}"]
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "s3:GetObject",
-          "s3:PutObject",
-          "s3:DeleteObject"
-        ]
-        Resource = ["arn:aws:s3:::${var.state_bucket_name}/${local.object_prefix}*"]
       }
     ], var.additional_terraform_policy_statements)
   })

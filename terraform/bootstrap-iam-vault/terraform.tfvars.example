@@ -3,9 +3,6 @@ aws_region = "us-east-1"
 vault_aws_user_name = "vault-aws-user"
 terraform_role_name = "terraform-workload-role"
 
-state_bucket_name = "my-org-terraform-state-prod"
-state_key_prefix  = "workload/"
-
 # Append extra statements to the generated default policy.
 additional_terraform_policy_statements = []
 
