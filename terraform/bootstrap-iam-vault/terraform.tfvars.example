@@ -2,6 +2,7 @@ aws_region = "us-east-1"
 
 vault_aws_user_name = "vault-aws-user"
 terraform_role_name = "terraform-workload-role"
+workload_iam_name   = "aws-ec2"
 
 # Append extra statements to the generated default policy.
 additional_terraform_policy_statements = []

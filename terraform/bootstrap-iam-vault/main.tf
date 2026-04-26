@@ -6,10 +6,10 @@ data "aws_caller_identity" "current" {}
 
 locals {
   resolved_account_id = var.account_id != "" ? var.account_id : data.aws_caller_identity.current.account_id
-  terraform_role_arn  = "arn:aws:iam::${local.resolved_account_id}:role/${var.terraform_role_name}"
-  terraform_instance_profile_arn = "arn:aws:iam::${local.resolved_account_id}:instance-profile/${var.terraform_role_name}"
-  kms_key_arn_pattern            = "arn:aws:kms:${var.aws_region}:${local.resolved_account_id}:key/*"
-  kms_alias_arn_pattern          = "arn:aws:kms:${var.aws_region}:${local.resolved_account_id}:alias/*"
+  workload_role_arn             = "arn:aws:iam::${local.resolved_account_id}:role/${var.workload_iam_name}"
+  workload_instance_profile_arn = "arn:aws:iam::${local.resolved_account_id}:instance-profile/${var.workload_iam_name}"
+  kms_key_arn_pattern           = "arn:aws:kms:${var.aws_region}:${local.resolved_account_id}:key/*"
+  kms_alias_arn_pattern         = "arn:aws:kms:${var.aws_region}:${local.resolved_account_id}:alias/*"
 }
 
 resource "aws_iam_user" "vault" {
@@ -58,7 +58,7 @@ resource "aws_iam_role_policy" "terraform_permissions" {
           "iam:DetachRolePolicy",
           "iam:ListAttachedRolePolicies"
         ]
-        Resource = [local.terraform_role_arn]
+        Resource = [local.workload_role_arn]
       },
       {
         Effect = "Allow"
@@ -71,8 +71,8 @@ resource "aws_iam_role_policy" "terraform_permissions" {
           "iam:ListInstanceProfilesForRole"
         ]
         Resource = [
-          local.terraform_role_arn,
-          local.terraform_instance_profile_arn
+          local.workload_role_arn,
+          local.workload_instance_profile_arn
         ]
       },
       {
@@ -83,7 +83,6 @@ resource "aws_iam_role_policy" "terraform_permissions" {
       {
         Effect = "Allow"
         Action = [
-          "kms:CreateKey",
           "kms:DescribeKey",
           "kms:GetKeyPolicy",
           "kms:GetKeyRotationStatus",
@@ -108,6 +107,7 @@ resource "aws_iam_role_policy" "terraform_permissions" {
       {
         Effect = "Allow"
         Action = [
+          "kms:CreateKey",
           "kms:ListAliases",
           "sts:GetCallerIdentity"
         ]

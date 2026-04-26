@@ -156,7 +156,7 @@ additional_terraform_policy_statements = [
 ## Terraform Usage
 
 1. Copy terraform.tfvars.example to terraform.tfvars.
-2. Set aws_region and names for vault_aws_user_name and terraform_role_name.
+2. Set aws_region and names for vault_aws_user_name, terraform_role_name, and workload_iam_name.
 3. Optionally add permissions through additional_terraform_policy_statements.
 4. Run terraform init, terraform plan, and terraform apply.
 

@@ -21,6 +21,12 @@ variable "terraform_role_name" {
   default     = "terraform-workload-role"
 }
 
+variable "workload_iam_name" {
+  description = "IAM role and instance profile name that Terraform workload is allowed to manage."
+  type        = string
+  default     = "aws-ec2"
+}
+
 variable "create_vault_access_key" {
   description = "If true, create an access key for the Vault IAM user and expose it as sensitive output."
   type        = bool
